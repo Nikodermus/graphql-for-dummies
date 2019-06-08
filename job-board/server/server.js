@@ -26,7 +26,10 @@ app.use(
   })
 );
 
-app.use("/graphql", graphqlExpress({ schema }));
+app.use(
+  "/graphql",
+  graphqlExpress(({ user }) => ({ schema, context: { user: user } }))
+);
 app.use("/graphiql", graphiqlExpress({ endpointURL: "/graphql" }));
 
 app.post("/login", (req, res) => {

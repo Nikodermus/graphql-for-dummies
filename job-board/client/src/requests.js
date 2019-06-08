@@ -1,51 +1,89 @@
 const endpoint = "http://localhost:9000/graphql";
-const fetchSettings = query => ({
-  method: "POST",
-  headers: {
-    "content-type": "application/json"
-  },
-  body: JSON.stringify(query)
-});
+
+const graphqlRequest = async query => {
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json"
+    },
+    body: JSON.stringify(query)
+  });
+
+  const { data, errors } = await response.json();
+  if (errors) {
+    throw new Error(errors.map(({ message }) => message).join("\n"));
+  }
+  return data;
+};
 
 export const loadJobs = async () => {
-  const res = await fetch(
-    endpoint,
-    fetchSettings({
-      query: `{
-    jobs{
-      title
-      company{
-        name
-      }
-      id
-    }
-  }`
-    })
-  );
+  const { jobs } = await graphqlRequest({
+    query: `{
+        jobs{
+          title
+          company{
+            name
+          }
+          id
+        }
+      }`
+  });
 
-  const { data } = await res.json();
-  return data.jobs;
+  return jobs;
 };
 
 export const searchJob = async id => {
-  const res = await fetch(
-    endpoint,
-    fetchSettings({
-      query: `query JobQuery($id: ID!){
-      job(id: $id ) {
+  const { job } = await graphqlRequest({
+    query: `query JobQuery($id: ID!){
+    job(id: $id ) {
+      id
+      title
+      description
+      company{
         id
-        title
+        name
+      }
+    }
+  }`,
+    variables: { id }
+  });
+
+  return job;
+};
+
+export const searchCompany = async id => {
+  const { company } = await graphqlRequest({
+    query: `query CompanyQuery($id:ID!){
+      company(id: $id){
+        name
+        id
         description
+        jobs {
+          id
+          title
+          description
+        }
+      }
+    }`,
+    variables: { id }
+  });
+  return company;
+};
+
+export const createJob = async input => {
+  const { job } = await graphqlRequest({
+    query: `
+    mutation CreateJob($input: CreateJobInput){
+      job: createJob(input: $input){
+        title
+        id
         company{
           id
           name
         }
       }
     }`,
-      variables: { id }
-    })
-  );
-
-  const { data } = await res.json();
-  return data.job;
+    variables: { input }
+  });
+  return job;
 };
