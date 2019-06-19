@@ -5,7 +5,7 @@ const expressJwt = require("express-jwt");
 const jwt = require("jsonwebtoken");
 const db = require("./db");
 const { makeExecutableSchema } = require("graphql-tools");
-const { graphqlExpress, graphiqlExpress } = require("apollo-server-express");
+const { ApolloServer, gql } = require("apollo-server-express");
 const fs = require("fs");
 
 const port = 9000;
@@ -13,9 +13,10 @@ const jwtSecret = Buffer.from("Zn8Q5tyZ/G1MHltc4F/gTkVJMlrbKiZt", "base64");
 
 const app = express();
 
-const typeDefs = fs.readFileSync("./schema.graphql", { encoding: "utf-8" });
+const typeDefs = gql(
+  fs.readFileSync("./schema.graphql", { encoding: "utf-8" })
+);
 const resolvers = require("./resolver");
-const schema = makeExecutableSchema({ typeDefs, resolvers });
 
 app.use(
   cors(),
@@ -26,11 +27,12 @@ app.use(
   })
 );
 
-app.use(
-  "/graphql",
-  graphqlExpress(({ user }) => ({ schema, context: { user: user } }))
-);
-app.use("/graphiql", graphiqlExpress({ endpointURL: "/graphql" }));
+const graphqlServer = new ApolloServer({
+  typeDefs,
+  resolvers,
+  context: ({ user }) => ({ user: user && db.users.get(user.sub) })
+});
+graphqlServer.applyMiddleware({ app });
 
 app.post("/login", (req, res) => {
   const { email, password } = req.body;

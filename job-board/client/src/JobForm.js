@@ -14,15 +14,13 @@ export class JobForm extends Component {
 
   handleClick = event => {
     event.preventDefault();
-    const companyId = "SJV0-wdOM";
 
     const { title, description } = this.state;
     createJob({
       title,
-      description,
-      companyId
+      description
     }).then(({ id }) => {
-      // this.props.history.push(`/jobs/${id}`);
+      this.props.history.push(`/jobs/${id}`);
     });
   };
 

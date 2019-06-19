@@ -10,7 +10,7 @@ const Mutation = {
   createJob: (root, { input }, { user }) => {
     if (!user) throw new Error("Unauth");
 
-    const id = db.jobs.create(input);
+    const id = db.jobs.create({ companyId: user.companyId, ...input });
     return db.jobs.get(id);
   }
 };
